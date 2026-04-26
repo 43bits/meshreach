@@ -4,9 +4,9 @@
 
 > *When the internet goes down, the most vulnerable shouldn't be the most silent.*
 
-![MeshReach Overview](\lib\assets\Flow.png)
+![MeshReach Overview](../meshreach/lib/assets/Flow.png)
 
-Drive link for apk = https://drive.google.com/drive/folders/1tbbrep-453bGs20oeo1lg5aVqxXagl_A?usp=sharing
+<!-- Drive link for apk = https://drive.google.com/drive/folders/1tbbrep-453bGs20oeo1lg5aVqxXagl_A?usp=sharing -->
 ---
 
 ## 🔗 Offline Mesh Communication — Built for All
