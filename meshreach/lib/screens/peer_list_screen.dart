@@ -1,127 +1,76 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_nearby_connections/flutter_nearby_connections.dart';
 import 'package:go_router/go_router.dart';
+import 'package:meshreach/mesh/mesh_manager.dart';
 import 'package:meshreach/models/peer.dart';
-import 'package:meshreach/services/peer_service.dart';
 import 'package:meshreach/components/stat_counter.dart';
 import 'package:meshreach/components/peer_card.dart';
 import 'package:meshreach/components/sos_button.dart';
-import 'package:meshreach/nav.dart';
 import 'package:meshreach/services/sos_service.dart';
+import 'package:meshreach/nav.dart';
 import 'package:meshreach/theme.dart';
-import 'package:meshreach/mesh/mesh_manager.dart';
 
 class PeerListScreen extends StatefulWidget {
   const PeerListScreen({super.key});
-
   @override
   State<PeerListScreen> createState() => _PeerListScreenState();
 }
 
 class _PeerListScreenState extends State<PeerListScreen> {
-  final PeerService _peerService = PeerService();
+  StreamSubscription? _sub;
   List<Peer> _peers = [];
-  int _messagesCount = 0;
-  int _acksCount = 0;
-  bool _isLoading = true;
+  bool _scanning = true;
 
   @override
   void initState() {
     super.initState();
-    _loadData(showLoading: true);
+    _sub = MeshManager().updates.listen((_) => _refresh());
+    _refresh();
+    // show scanning indicator for 3s
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) setState(() => _scanning = false);
+    });
   }
 
-  // Future<void> _loadData({required bool showLoading}) async {
-  //   if (showLoading) {
-  //     setState(() => _isLoading = true);
-  //   }
-  //   try {
-  //     final peers = await _peerService.getPeers();
-  //     final messages = await _peerService.getMessagesCount();
-  //     final acks = await _peerService.getAcksCount();
-
-  //     if (!mounted) return;
-  //     setState(() {
-  //       _peers = peers;
-  //       _messagesCount = messages;
-  //       _acksCount = acks;
-  //     });
-  //   } catch (e) {
-  //     debugPrint('Failed to load data: $e');
-  //   } finally {
-  //     if (!mounted) return;
-  //     setState(() => _isLoading = false);
-  //   }
-  // }
-  // Add import
-// Replace _loadData
-
-Future<void> _loadData({required bool showLoading}) async {
-  if (showLoading) setState(() => _isLoading = true);
-  try {
-    final mesh = MeshManager();
-    final dbPeers = mesh.connectedPeers.map((d) => Peer(
-      id: d.deviceId,
-      deviceName: d.deviceName,
-      connectionType: 'WiFi Direct',
-      isConnected: d.state == SessionState.connected,
-      lastSeen: DateTime.now(),
-    )).toList();
-    final messages = await _peerService.getMessagesCount();
-    final acks = await _peerService.getAcksCount();
+  void _refresh() {
     if (!mounted) return;
     setState(() {
-      _peers = dbPeers.isEmpty ? _peerService._getSamplePeers() : dbPeers;
-      _messagesCount = messages;
-      _acksCount = acks;
+      _peers = MeshManager().connectedPeers.map((id) => Peer(
+        id: id,
+        deviceName: id.length > 8 ? id.substring(0, 8).toUpperCase() : id.toUpperCase(),
+        connectionType: 'WiFi Direct',
+        isConnected: true,
+        lastSeen: DateTime.now(),
+      )).toList();
     });
-  } catch (e) {
-    debugPrint('loadData: $e');
-  } finally {
-    if (!mounted) return;
-    setState(() => _isLoading = false);
   }
-}
 
-  Future<void> _onRefresh() async => _loadData(showLoading: false);
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
 
-  // void _handleSOS() {
-  //   debugPrint('SOS button pressed!');
-  //   ScaffoldMessenger.of(context).showSnackBar(
-  //     SnackBar(
-  //       content: Text(
-  //         'SOS Signal Sent',
-  //         style: dmMonoStyle.copyWith(fontSize: 12),
-  //       ),
-  //       backgroundColor: MeshColors.sosButton,
-  //       duration: const Duration(seconds: 2),
-  //     ),
-  //   );
-  // }
-void _handleSOS() async {
-  await SosService.broadcast();
-  if (!mounted) return;
-  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-    content: Text('SOS BROADCAST SENT', style: dmMonoStyle.copyWith(fontSize: 12)),
-    backgroundColor: MeshColors.sosButton,
-    duration: const Duration(seconds: 2),
-  ));
-}
+  void _handleSOS() async {
+    await SosService.broadcast();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('SOS BROADCAST SENT', style: dmMonoStyle.copyWith(fontSize: 12)),
+      backgroundColor: MeshColors.sosButton,
+      duration: const Duration(seconds: 2),
+    ));
+  }
 
   @override
   Widget build(BuildContext context) {
-    final connectedPeers = _peers.where((p) => p.isConnected).length;
-
     return Scaffold(
       backgroundColor: MeshColors.background,
       appBar: AppBar(
         backgroundColor: MeshColors.background,
         elevation: 0,
         scrolledUnderElevation: 0,
-        title: Text(
-          'MESHREACH',
-          style: dmMonoStyle.copyWith(fontSize: 14, fontWeight: FontWeight.w500, letterSpacing: 1.2),
-        ),
+        title: Text('MESHREACH',
+            style: dmMonoStyle.copyWith(fontSize: 14, fontWeight: FontWeight.w500, letterSpacing: 1.2)),
       ),
       body: SafeArea(
         top: false,
@@ -129,50 +78,60 @@ void _handleSOS() async {
           children: [
             Column(
               children: [
+                // Scanning indicator
+                if (_scanning)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 10, height: 10,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 1.5, color: MeshColors.muted),
+                        ),
+                        const SizedBox(width: 10),
+                        Text('SCANNING NEARBY DEVICES...',
+                            style: dmMonoStyle.copyWith(
+                                fontSize: 10, color: MeshColors.muted, letterSpacing: 0.8)),
+                      ],
+                    ),
+                  ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
                   child: Row(
                     children: [
-                      StatCounter(label: 'peers', count: connectedPeers),
+                      StatCounter(label: 'peers', count: _peers.length),
                       const SizedBox(width: 8),
-                      StatCounter(label: 'msgs', count: _messagesCount),
-                      const SizedBox(width: 8),
-                      StatCounter(label: 'ack', count: _acksCount),
+                      StatCounter(label: 'connected', count: _peers.length),
                     ],
                   ),
                 ),
                 Expanded(
-                  child: _isLoading
+                  child: _peers.isEmpty
                       ? Center(
-                          child: CircularProgressIndicator(color: MeshColors.muted, strokeWidth: 2),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('NO PEERS FOUND',
+                                  style: dmMonoStyle.copyWith(
+                                      color: MeshColors.muted, fontSize: 12, letterSpacing: 1)),
+                              const SizedBox(height: 8),
+                              Text('ensure both devices have app open',
+                                  style: dmMonoStyle.copyWith(
+                                      color: MeshColors.cardBorder, fontSize: 10)),
+                            ],
+                          ),
                         )
-                      : RefreshIndicator(
-                          onRefresh: _onRefresh,
-                          color: MeshColors.textPrimary,
-                          backgroundColor: MeshColors.cardBackground,
-                          child: _peers.isEmpty
-                              ? ListView(
-                                  physics: const AlwaysScrollableScrollPhysics(),
-                                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                                  children: [
-                                    const SizedBox(height: 40),
-                                    Center(
-                                      child: Text('No peers found', style: dmMonoStyle.copyWith(color: MeshColors.muted, fontSize: 12)),
-                                    ),
-                                  ],
-                                )
-                              : ListView.builder(
-                                  physics: const AlwaysScrollableScrollPhysics(),
-                                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                                  itemCount: _peers.length,
-                                  itemBuilder: (context, index) {
-                                    final peer = _peers[index];
-                                    return PeerCard(
-                                      peer: peer,
-                                      onTap: () => context.go(AppRoutes.chatForPeer(peer.id), extra: peer),
-                                    );
-                                  },
-                                ),
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          itemCount: _peers.length,
+                          itemBuilder: (context, i) => PeerCard(
+                            peer: _peers[i],
+                            onTap: () => context.go(
+                                AppRoutes.chatForPeer(_peers[i].id),
+                                extra: _peers[i]),
+                          ),
                         ),
                 ),
               ],

@@ -32,15 +32,24 @@ import 'utils/permissions.dart';
 // }
 
 
+// void main() async {
+//   WidgetsFlutterBinding.ensureInitialized();
+//   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+//     statusBarColor: Colors.transparent,
+//     statusBarIconBrightness: Brightness.light,
+//   ));
+//   await AppPermissions.requestAll();
+//   await MeshDB().db;
+//   await MeshManager().init('node_${DateTime.now().millisecondsSinceEpoch % 9999}');
+//   runApp(const MeshReachApp());
+// }
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
-  ));
   await AppPermissions.requestAll();
   await MeshDB().db;
-  await MeshManager().init('node_${DateTime.now().millisecondsSinceEpoch % 9999}');
+  // Use device ID slice as name so each device shows unique
+  final name = 'node_${DateTime.now().millisecondsSinceEpoch % 9999}';
+  await MeshManager().init(name);
   runApp(const MeshReachApp());
 }
 

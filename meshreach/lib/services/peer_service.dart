@@ -14,7 +14,7 @@ class PeerService {
       final peersJson = prefs.getString(_peersKey);
       
       if (peersJson == null) {
-        final samplePeers = _getSamplePeers();
+        final samplePeers = getSamplePeers();
         await savePeers(samplePeers);
         return samplePeers;
       }
@@ -30,7 +30,7 @@ class PeerService {
       }).whereType<Peer>().toList();
     } catch (e) {
       debugPrint('Failed to load peers: $e');
-      return _getSamplePeers();
+      return getSamplePeers();
     }
   }
 
@@ -82,41 +82,78 @@ class PeerService {
     }
   }
 
-  List<Peer> _getSamplePeers() => [
-    Peer(
-      id: '1',
-      deviceName: 'PIXEL 8 PRO',
-      connectionType: 'WiFi Direct',
-      isConnected: true,
-      lastSeen: DateTime.now(),
-    ),
-    Peer(
-      id: '2',
-      deviceName: 'IPHONE 15',
-      connectionType: 'WiFi Direct',
-      isConnected: true,
-      lastSeen: DateTime.now().subtract(const Duration(minutes: 5)),
-    ),
-    Peer(
-      id: '3',
-      deviceName: 'SAMSUNG TAB S9',
-      connectionType: 'WiFi Direct',
-      isConnected: false,
-      lastSeen: DateTime.now().subtract(const Duration(hours: 2)),
-    ),
-    Peer(
-      id: '4',
-      deviceName: 'MACBOOK PRO',
-      connectionType: 'WiFi Direct',
-      isConnected: true,
-      lastSeen: DateTime.now().subtract(const Duration(seconds: 30)),
-    ),
-    Peer(
-      id: '5',
-      deviceName: 'DELL XPS 13',
-      connectionType: 'WiFi Direct',
-      isConnected: false,
-      lastSeen: DateTime.now().subtract(const Duration(days: 1)),
-    ),
-  ];
+  // List<Peer> _getSamplePeers() => [
+  //   Peer(
+  //     id: '1',
+  //     deviceName: 'PIXEL 8 PRO',
+  //     connectionType: 'WiFi Direct',
+  //     isConnected: true,
+  //     lastSeen: DateTime.now(),
+  //   ),
+  //   Peer(
+  //     id: '2',
+  //     deviceName: 'IPHONE 15',
+  //     connectionType: 'WiFi Direct',
+  //     isConnected: true,
+  //     lastSeen: DateTime.now().subtract(const Duration(minutes: 5)),
+  //   ),
+  //   Peer(
+  //     id: '3',
+  //     deviceName: 'SAMSUNG TAB S9',
+  //     connectionType: 'WiFi Direct',
+  //     isConnected: false,
+  //     lastSeen: DateTime.now().subtract(const Duration(hours: 2)),
+  //   ),
+  //   Peer(
+  //     id: '4',
+  //     deviceName: 'MACBOOK PRO',
+  //     connectionType: 'WiFi Direct',
+  //     isConnected: true,
+  //     lastSeen: DateTime.now().subtract(const Duration(seconds: 30)),
+  //   ),
+  //   Peer(
+  //     id: '5',
+  //     deviceName: 'DELL XPS 13',
+  //     connectionType: 'WiFi Direct',
+  //     isConnected: false,
+  //     lastSeen: DateTime.now().subtract(const Duration(days: 1)),
+  //   ),
+  // ];
+  List<Peer> getSamplePeers() => [
+  Peer(
+    id: '1',
+    deviceName: 'PIXEL 8 PRO',
+    connectionType: 'WiFi Direct',
+    isConnected: true,
+    lastSeen: DateTime.now(),
+  ),
+  Peer(
+    id: '2',
+    deviceName: 'IPHONE 15',
+    connectionType: 'WiFi Direct',
+    isConnected: true,
+    lastSeen: DateTime.now().subtract(const Duration(minutes: 5)),
+  ),
+  Peer(
+    id: '3',
+    deviceName: 'SAMSUNG TAB S9',
+    connectionType: 'WiFi Direct',
+    isConnected: false,
+    lastSeen: DateTime.now().subtract(const Duration(hours: 2)),
+  ),
+  Peer(
+    id: '4',
+    deviceName: 'MACBOOK PRO',
+    connectionType: 'WiFi Direct',
+    isConnected: true,
+    lastSeen: DateTime.now().subtract(const Duration(seconds: 30)),
+  ),
+  Peer(
+    id: '5',
+    deviceName: 'DELL XPS 13',
+    connectionType: 'WiFi Direct',
+    isConnected: false,
+    lastSeen: DateTime.now().subtract(const Duration(days: 1)),
+  ),
+];
 }

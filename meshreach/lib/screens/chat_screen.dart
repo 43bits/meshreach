@@ -143,14 +143,23 @@ class _ChatScreenState extends State<ChatScreen> {
 }
 
 
+  // Future<void> _handleVoice() async {
+  //   final peer = _resolvedPeer;
+  //   if (peer == null) return;
+  //   final msg = await _chatService.sendVoice(peerId: peer.id, durationSeconds: 9, isSent: true);
+  //   if (!mounted) return;
+  //   setState(() => _messages = [..._messages, msg]);
+  //   _scrollToBottomSoon();
+  // }
   Future<void> _handleVoice() async {
-    final peer = _resolvedPeer;
-    if (peer == null) return;
-    final msg = await _chatService.sendVoice(peerId: peer.id, durationSeconds: 9, isSent: true);
-    if (!mounted) return;
-    setState(() => _messages = [..._messages, msg]);
-    _scrollToBottomSoon();
-  }
+  final peer = _resolvedPeer;
+  if (peer == null) return;
+  // placeholder until record fixed
+  final msg = await _chatService.sendVoice(peerId: peer.id, durationSeconds: 9, isSent: true);
+  if (!mounted) return;
+  setState(() => _messages = [..._messages, msg]);
+  _scrollToBottomSoon();
+}
 
   Future<void> _handleLocation() async {
     final peer = _resolvedPeer;
