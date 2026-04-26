@@ -4,10 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:meshreach/components/message_bubble.dart';
+import 'package:meshreach/mesh/mesh_manager.dart';
+import 'package:meshreach/mesh/mesh_message.dart';
 import 'package:meshreach/models/chat_message.dart';
 import 'package:meshreach/models/peer.dart';
 import 'package:meshreach/services/chat_service.dart';
 import 'package:meshreach/services/peer_service.dart';
+import 'package:meshreach/services/sos_service.dart';
 import 'package:meshreach/theme.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -92,32 +95,53 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
+  // Future<void> _send() async {
+  //   final text = _controller.text.trim();
+  //   if (text.isEmpty || _isSending) return;
+  //   final peer = _resolvedPeer;
+  //   if (peer == null) return;
+
+  //   setState(() => _isSending = true);
+  //   _controller.clear();
+
+  //   try {
+  //     final sent = await _chatService.sendMessage(peerId: peer.id, text: text);
+  //     if (!mounted) return;
+  //     setState(() => _messages = [..._messages, sent]);
+  //     _scrollToBottomSoon();
+
+  //     // Keep the top-level counters feeling “alive” without a backend.
+  //     final current = await _peerService.getMessagesCount();
+  //     await _peerService.setMessagesCount(current + 1);
+  //   } catch (e) {
+  //     debugPrint('Failed to send message: $e');
+  //   } finally {
+  //     if (!mounted) return;
+  //     setState(() => _isSending = false);
+  //     _focusNode.requestFocus();
+  //   }
+  // }
+
   Future<void> _send() async {
-    final text = _controller.text.trim();
-    if (text.isEmpty || _isSending) return;
-    final peer = _resolvedPeer;
-    if (peer == null) return;
-
-    setState(() => _isSending = true);
-    _controller.clear();
-
-    try {
-      final sent = await _chatService.sendMessage(peerId: peer.id, text: text);
-      if (!mounted) return;
-      setState(() => _messages = [..._messages, sent]);
-      _scrollToBottomSoon();
-
-      // Keep the top-level counters feeling “alive” without a backend.
-      final current = await _peerService.getMessagesCount();
-      await _peerService.setMessagesCount(current + 1);
-    } catch (e) {
-      debugPrint('Failed to send message: $e');
-    } finally {
-      if (!mounted) return;
-      setState(() => _isSending = false);
-      _focusNode.requestFocus();
-    }
+  final text = _controller.text.trim();
+  if (text.isEmpty || _isSending) return;
+  final peer = _resolvedPeer;
+  if (peer == null) return;
+  setState(() => _isSending = true);
+  _controller.clear();
+  try {
+    await MeshManager().sendMessage(text, MeshMsgType.text);
+    final sent = await _chatService.sendMessage(peerId: peer.id, text: text);
+    if (!mounted) return;
+    setState(() => _messages = [..._messages, sent]);
+    _scrollToBottomSoon();
+  } finally {
+    if (!mounted) return;
+    setState(() => _isSending = false);
+    _focusNode.requestFocus();
   }
+}
+
 
   Future<void> _handleVoice() async {
     final peer = _resolvedPeer;
@@ -146,16 +170,25 @@ class _ChatScreenState extends State<ChatScreen> {
     _scrollToBottomSoon();
   }
 
-  void _handleSOS() {
-    debugPrint('SOS pressed (chat)');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('SOS Signal Sent', style: dmMonoStyle.copyWith(fontSize: 12)),
-        backgroundColor: MeshColors.sosButton,
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
+  // void _handleSOS() {
+  //   debugPrint('SOS pressed (chat)');
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     SnackBar(
+  //       content: Text('SOS Signal Sent', style: dmMonoStyle.copyWith(fontSize: 12)),
+  //       backgroundColor: MeshColors.sosButton,
+  //       duration: const Duration(seconds: 2),
+  //     ),
+  //   );
+  // }
+void _handleSOS() async {
+  await SosService.broadcast();
+  if (!mounted) return;
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    content: Text('SOS BROADCAST SENT', style: dmMonoStyle.copyWith(fontSize: 12)),
+    backgroundColor: MeshColors.sosButton,
+    duration: const Duration(seconds: 2),
+  ));
+}
 
   @override
   Widget build(BuildContext context) {

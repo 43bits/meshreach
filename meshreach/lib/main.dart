@@ -1,49 +1,58 @@
 import 'package:flutter/material.dart';
+import 'package:meshreach/db/mesh_db.dart';
+import 'package:meshreach/mesh/mesh_manager.dart';
 import 'package:provider/provider.dart';
 import 'theme.dart';
 import 'nav.dart';
+import 'package:flutter/services.dart';
+import 'utils/permissions.dart';
+// void main() async {
+//   WidgetsFlutterBinding.ensureInitialized();
+//   await MeshDB().db; // init DB
+//   await MeshManager().init('user_${DateTime.now().millisecondsSinceEpoch % 9999}');
+//   runApp(const MyApp());
+// }
 
-/// Main entry point for the application
-///
-/// This sets up:
-/// - Provider state management (ThemeProvider, CounterProvider)
-/// - go_router navigation
-/// - Material 3 theming with light/dark modes
-void main() {
-  // Initialize the app
-  runApp(const MyApp());
+// class MyApp extends StatelessWidget {
+//   const MyApp({super.key});
+//   @override
+//   Widget build(BuildContext context) {
+
+//     return MaterialApp.router(
+//       title: 'MeshReach',
+//       debugShowCheckedModeBanner: false,
+
+
+//       theme: lightTheme,
+//       darkTheme: darkTheme,
+//       themeMode: ThemeMode.dark,
+//       routerConfig: AppRouter.router,
+//     );
+//   }
+// }
+
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
+  ));
+  await AppPermissions.requestAll();
+  await MeshDB().db;
+  await MeshManager().init('node_${DateTime.now().millisecondsSinceEpoch % 9999}');
+  runApp(const MeshReachApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
+class MeshReachApp extends StatelessWidget {
+  const MeshReachApp({super.key});
   @override
-  Widget build(BuildContext context) {
-    // MultiProvider wraps the app to provide state to all widgets
-    // As you extend the app, use MultiProvider to wrap the app
-    // and provide state to all widgets
-    // Example:
-    // return MultiProvider(
-    //   providers: [
-    //     ChangeNotifierProvider(create: (_) => ExampleProvider()),
-    //   ],
-    //   child: MaterialApp.router(
-    //     title: 'Dreamflow Starter',
-    //     debugShowCheckedModeBanner: false,
-    //     routerConfig: AppRouter.router,
-    //   ),
-    // );
-    return MaterialApp.router(
-      title: 'MeshReach',
-      debugShowCheckedModeBanner: false,
-
-      // Theme configuration
-      theme: lightTheme,
-      darkTheme: darkTheme,
-      themeMode: ThemeMode.dark,
-
-      // Use context.go() or context.push() to navigate to the routes.
-      routerConfig: AppRouter.router,
-    );
-  }
+  Widget build(BuildContext context) => MaterialApp.router(
+        title: 'MeshReach',
+        debugShowCheckedModeBanner: false,
+        theme: lightTheme,
+        darkTheme: darkTheme,
+        themeMode: ThemeMode.dark,
+        routerConfig: AppRouter.router,
+      );
 }

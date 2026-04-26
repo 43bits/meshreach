@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_nearby_connections/flutter_nearby_connections.dart';
 import 'package:go_router/go_router.dart';
 import 'package:meshreach/models/peer.dart';
 import 'package:meshreach/services/peer_service.dart';
@@ -6,7 +7,9 @@ import 'package:meshreach/components/stat_counter.dart';
 import 'package:meshreach/components/peer_card.dart';
 import 'package:meshreach/components/sos_button.dart';
 import 'package:meshreach/nav.dart';
+import 'package:meshreach/services/sos_service.dart';
 import 'package:meshreach/theme.dart';
+import 'package:meshreach/mesh/mesh_manager.dart';
 
 class PeerListScreen extends StatefulWidget {
   const PeerListScreen({super.key});
@@ -28,44 +31,82 @@ class _PeerListScreenState extends State<PeerListScreen> {
     _loadData(showLoading: true);
   }
 
-  Future<void> _loadData({required bool showLoading}) async {
-    if (showLoading) {
-      setState(() => _isLoading = true);
-    }
-    try {
-      final peers = await _peerService.getPeers();
-      final messages = await _peerService.getMessagesCount();
-      final acks = await _peerService.getAcksCount();
+  // Future<void> _loadData({required bool showLoading}) async {
+  //   if (showLoading) {
+  //     setState(() => _isLoading = true);
+  //   }
+  //   try {
+  //     final peers = await _peerService.getPeers();
+  //     final messages = await _peerService.getMessagesCount();
+  //     final acks = await _peerService.getAcksCount();
 
-      if (!mounted) return;
-      setState(() {
-        _peers = peers;
-        _messagesCount = messages;
-        _acksCount = acks;
-      });
-    } catch (e) {
-      debugPrint('Failed to load data: $e');
-    } finally {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-    }
+  //     if (!mounted) return;
+  //     setState(() {
+  //       _peers = peers;
+  //       _messagesCount = messages;
+  //       _acksCount = acks;
+  //     });
+  //   } catch (e) {
+  //     debugPrint('Failed to load data: $e');
+  //   } finally {
+  //     if (!mounted) return;
+  //     setState(() => _isLoading = false);
+  //   }
+  // }
+  // Add import
+// Replace _loadData
+
+Future<void> _loadData({required bool showLoading}) async {
+  if (showLoading) setState(() => _isLoading = true);
+  try {
+    final mesh = MeshManager();
+    final dbPeers = mesh.connectedPeers.map((d) => Peer(
+      id: d.deviceId,
+      deviceName: d.deviceName,
+      connectionType: 'WiFi Direct',
+      isConnected: d.state == SessionState.connected,
+      lastSeen: DateTime.now(),
+    )).toList();
+    final messages = await _peerService.getMessagesCount();
+    final acks = await _peerService.getAcksCount();
+    if (!mounted) return;
+    setState(() {
+      _peers = dbPeers.isEmpty ? _peerService._getSamplePeers() : dbPeers;
+      _messagesCount = messages;
+      _acksCount = acks;
+    });
+  } catch (e) {
+    debugPrint('loadData: $e');
+  } finally {
+    if (!mounted) return;
+    setState(() => _isLoading = false);
   }
+}
 
   Future<void> _onRefresh() async => _loadData(showLoading: false);
 
-  void _handleSOS() {
-    debugPrint('SOS button pressed!');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'SOS Signal Sent',
-          style: dmMonoStyle.copyWith(fontSize: 12),
-        ),
-        backgroundColor: MeshColors.sosButton,
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
+  // void _handleSOS() {
+  //   debugPrint('SOS button pressed!');
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     SnackBar(
+  //       content: Text(
+  //         'SOS Signal Sent',
+  //         style: dmMonoStyle.copyWith(fontSize: 12),
+  //       ),
+  //       backgroundColor: MeshColors.sosButton,
+  //       duration: const Duration(seconds: 2),
+  //     ),
+  //   );
+  // }
+void _handleSOS() async {
+  await SosService.broadcast();
+  if (!mounted) return;
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    content: Text('SOS BROADCAST SENT', style: dmMonoStyle.copyWith(fontSize: 12)),
+    backgroundColor: MeshColors.sosButton,
+    duration: const Duration(seconds: 2),
+  ));
+}
 
   @override
   Widget build(BuildContext context) {
