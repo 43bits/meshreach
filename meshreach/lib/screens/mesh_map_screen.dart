@@ -15,11 +15,30 @@ class _MeshMapScreenState extends State<MeshMapScreen> {
   Position? _myPosition;
   final List<LatLng> _peerPositions = [];
 
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   _getLocation();
+  // }
   @override
   void initState() {
-    super.initState();
-    _getLocation();
+  super.initState();
+  _startLocationStream();
   }
+  void _startLocationStream() {
+  Geolocator.getPositionStream(
+    locationSettings: const LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 5, // update every 5 meters
+    ),
+  ).listen((pos) {
+    if (!mounted) return;
+    setState(() => _myPosition = pos);
+    _addMarkers();
+  });
+  }
+
+
 
   Future<void> _getLocation() async {
     try {

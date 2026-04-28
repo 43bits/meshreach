@@ -21,6 +21,8 @@ class ChatScreen extends StatefulWidget {
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
+
+  
 }
 
 class _ChatScreenState extends State<ChatScreen> {
@@ -36,11 +38,36 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Peer? _resolvedPeer;
 
+
+  StreamSubscription? _meshSub;
+
+
   @override
   void initState() {
-    super.initState();
-    unawaited(_resolvePeerAndLoad());
+  super.initState();
+  unawaited(_resolvePeerAndLoad());
+  _meshSub = MeshManager().messageStream.listen((data) {
+    if (!mounted) return;
+    final now = DateTime.now();
+    final msg = ChatMessage(
+      id: '${now.microsecondsSinceEpoch}',
+      peerId: data['peer_id'],
+      isSent: false,
+      type: ChatMessageType.text,
+      text: data['content'],
+      createdAt: now,
+      updatedAt: now,
+    );
+    setState(() => _messages = [..._messages, msg]);
+    _scrollToBottomSoon();
+  });
   }
+  // void initState() {
+  //   super.initState();
+  //   unawaited(_resolvePeerAndLoad());
+  // }
+  
+
 
   Future<void> _resolvePeerAndLoad() async {
     try {
@@ -62,8 +89,17 @@ class _ChatScreenState extends State<ChatScreen> {
     await _loadMessages(peerId: _resolvedPeer!.id);
   }
 
+  // @override
+  // void dispose() {
+  //   _controller.dispose();
+  //   _focusNode.dispose();
+  //   _scrollController.dispose();
+  //   super.dispose();
+  // }
+
   @override
   void dispose() {
+    _meshSub?.cancel();
     _controller.dispose();
     _focusNode.dispose();
     _scrollController.dispose();

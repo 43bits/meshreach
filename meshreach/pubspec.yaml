@@ -35,6 +35,8 @@ dependencies:
   provider: ^6.1.0
   shared_preferences: ^2.3.0
   google_fonts: ^6.1.0
+  flutter_local_notifications: ^17.2.0
+  flutter_launcher_icons: ^0.13.1
   # Phase 2 mesh
   # flutter_nearby_connections: ^2.0.0
   # flutter_nearby_connections: ^1.1.2
@@ -116,10 +118,19 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# flutter_launcher_icons:
+#   android: true
+#   ios: true
+#   image_path: assets/icons/dreamflow_icon.jpg
+#   remove_alpha_ios: true
+
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: assets/icons/dreamflow_icon.jpg
+  image_path: E:/work/APP/meshreach/meshreach/lib/assets/icon.jpg
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: E:/work/APP/meshreach/meshreach/lib/assets/icon.jpg
   remove_alpha_ios: true
 
 

@@ -141,6 +141,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
+import 'package:meshreach/services/sos_service.dart';
 import 'package:nearby_connections/nearby_connections.dart';
 import 'package:uuid/uuid.dart';
 import '../db/mesh_db.dart';
@@ -154,6 +155,11 @@ class MeshManager extends ChangeNotifier {
 
   final StreamController<void> _updateStream = StreamController.broadcast();
   Stream<void> get updates => _updateStream.stream;
+
+// fix
+  final StreamController<Map<String,dynamic>> _msgStream = StreamController.broadcast();
+  Stream<Map<String,dynamic>> get messageStream => _msgStream.stream;
+  // 
 
   final String deviceId = const Uuid().v4().substring(0, 8);
   final Set<String> _connectedIds = {};
@@ -241,12 +247,20 @@ class MeshManager extends ChangeNotifier {
   Future<void> _onReceive(MeshMessage msg) async {
     if (await MeshDB().isDuplicate(msg.uuid)) return;
     if (msg.ttl <= 0) return;
+    
     final plain = MeshCrypto.decrypt(msg.encryptedData, msg.iv);
+
+    if (msg.type == MeshMsgType.sos) {
+    final parts = plain.split('|');
+    final location = parts.length > 1 ? parts[1] : 'unknown';
+    await SosService.showIncoming(msg.from, location);
+    }
     await MeshDB().insertMessage({
       'uuid': msg.uuid, 'type': msg.type.name,
       'content': plain, 'direction': 'received',
       'peer_id': msg.from, 'ts': msg.ts,
     });
+    _msgStream.add({'peer_id': msg.from, 'content': plain, 'type': msg.type.name, 'ts': msg.ts});
     msg.ttl -= 1;
     msg.hops.add(deviceId);
     _updateStream.add(null);

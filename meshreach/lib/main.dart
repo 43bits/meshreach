@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:meshreach/db/mesh_db.dart';
 import 'package:meshreach/mesh/mesh_manager.dart';
+import 'package:meshreach/services/sos_service.dart';
 import 'package:provider/provider.dart';
 import 'theme.dart';
 import 'nav.dart';
@@ -45,12 +46,15 @@ import 'utils/permissions.dart';
 // }
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
   await AppPermissions.requestAll();
+  debugPrint('Ensure WiFi radio ON + Bluetooth ON for mesh to work');
   await MeshDB().db;
   // Use device ID slice as name so each device shows unique
   final name = 'node_${DateTime.now().millisecondsSinceEpoch % 9999}';
   await MeshManager().init(name);
   runApp(const MeshReachApp());
+  await SosService.init();
 }
 
 class MeshReachApp extends StatelessWidget {

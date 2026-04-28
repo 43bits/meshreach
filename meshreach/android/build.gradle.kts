@@ -28,6 +28,7 @@ buildscript {
     dependencies {
         // classpath("com.android.tools.build:gradle:8.3.0")
         classpath("com.android.tools.build:gradle:8.9.1")
+        // coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
         // classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.0")
     }
 }
@@ -66,6 +67,7 @@ subprojects {
             compileOptions {
                 sourceCompatibility = JavaVersion.VERSION_17
                 targetCompatibility = JavaVersion.VERSION_17
+                // isCoreLibraryDesugaringEnabled = true
             }
         }
         tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
